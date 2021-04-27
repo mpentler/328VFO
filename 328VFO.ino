@@ -161,16 +161,18 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
 
     case 2: // Change step size
       if (!(PIND & (1 << button_step))) {
-        if ((!(menu_displayed)) && (!(sending_message))) {
-          freqsteps += 1;
-          if (freqsteps > step_arraylength - 1) {
-            freqsteps = 0; // Reset to beginning of array
+        if ((!(menu_displayed)) {
+          if (!(sending_message)) {
+            freqsteps += 1;
+            if (freqsteps > step_arraylength - 1) {
+              freqsteps = 0; // Reset to beginning of array
+            }
+            clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+            update_display();
           }
-          clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
-          update_display();
-        }
-        else {
-          sending_message = false;
+          else {
+            sending_message = false;
+          }
         }
       }
       break;
