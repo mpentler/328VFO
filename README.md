@@ -5,12 +5,12 @@ An ATMega328p-powered Si5351a VFO controller and CW keyer. This could be used in
 
 Standard breadboarded 328p with 16MHz crystal and reset button, buttons connected to PORTD as below, shared i2c bus with pull-up resistors for screen/clock.
 
-PD0 PTT/Enter
-PD1 Step Size
-PD2 Rotary button, enter/exit menu
-PD3 Rotary A, left
-PD4 Rotary B, right
-PD5 Band change
+* PD0 PTT/Enter
+* PD1 Step Size
+* PD2 Rotary button, enter/exit menu
+* PD3 Rotary A, left
+* PD4 Rotary B, right
+* PD5 Band change
 
 Some issues with debouncing or button reads being missed have occurred - help me if you can! Maybe I need a timer instead of sleeping?
 
