@@ -198,16 +198,18 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
 
     case 32: // Change band
       if (!(PIND & (1 << button_band))) {
-        if ((!(menu_displayed)) && (!(sending_message))) {
-          currentband += 1;
-          if (currentband > band_arraylength - 1) {
-            currentband = 0; // Reset to beginning of array
+        if ((!(menu_displayed)) {
+          if (!(sending_message)) {
+            currentband += 1;
+            if (currentband > band_arraylength - 1) {
+              currentband = 0; // Reset to beginning of array
+            }
+            frequency = bandstarts[currentband];
+            update_display();
           }
-          frequency = bandstarts[currentband];
-          update_display();
-        }
-        else {
-          sending_message = false;
+          else {
+            sending_message = false;
+          }
         }
       }
       break;
