@@ -178,7 +178,6 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
     case 4: // Enter/Exit menu system
       if (!(PIND & (1 << button_menu))) {
         if (!(sending_message)) {
-          // send_message();
           if (!(menu_displayed)) {
             draw_menu();
             display.clearField(0, menuoption, 1);
