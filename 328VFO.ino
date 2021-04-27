@@ -137,7 +137,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
           }
         }
         else {                                // Button going down, but we are in menus, so it's an enter button
-          if (!(enable_select)) {
+          if (!(enable_select)) { // Are we in a main or sub-menu?
             menupage = menuoption;
             draw_menu();
             display.clearField(0, menuoption, 1);
@@ -164,7 +164,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
         if ((!(menu_displayed)) && (!(sending_message))) {
           freqsteps += 1;
           if (freqsteps > step_arraylength - 1) {
-            freqsteps = 0;
+            freqsteps = 0; // Reset to beginning of array
           }
           clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
           update_display();
@@ -186,9 +186,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
             menu_displayed = true;
           }
           else {
-            redraw_VFO_UI();
-            update_display();
-            menu_displayed = false;
+            menu_cancel();
           }
         }
         else {
@@ -203,7 +201,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
         if ((!(menu_displayed)) && (!(sending_message))) {
           currentband += 1;
           if (currentband > band_arraylength - 1) {
-            currentband = 0;
+            currentband = 0; // Reset to beginning of array
           }
           frequency = bandstarts[currentband];
           update_display();
@@ -352,12 +350,7 @@ void menu_selectoption() {
       display.clearField(0, menuoption, 17); // Clear the correct menu line
       display.println(">Selected");
       delay(1000);
-      enable_select = false;
-      menupage = 0;
-      menuoption = 1;
-      menu_displayed = false;
-      redraw_VFO_UI();
-      update_display();
+      menu_cancel();
       break;
 
     case 2:
@@ -366,12 +359,7 @@ void menu_selectoption() {
           display.clearField(0, menuoption, 17);
           display.println(">Selected");
           delay(1000);
-          enable_select = false;
-          menupage = 0;
-          menuoption = 1;
-          menu_displayed = false;
-          redraw_VFO_UI();
-          update_display();
+          menu_cancel();
           send_message();
           break;
 
@@ -393,9 +381,9 @@ void menu_cancel() { // Reused a lot
   enable_select = false;
   menupage = 0;
   menuoption = 1;
-  menu_displayed = false;
   redraw_VFO_UI();
   update_display();
+  menu_displayed = false;
 }
 
 // ******************************************************************************************************************************************
