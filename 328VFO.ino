@@ -194,7 +194,6 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
           sending_message = false;
         }
       }
-
       break;
 
     case 32: // Change band
