@@ -321,6 +321,7 @@ void draw_menu() {
       display.println(menuOpt2List[0]);
       display.println(menuOpt2List[1]);
       display.println(menuOpt2List[2]);
+      display.println(menuOpt2List[3]);
       enable_select = true;
       break;
 
