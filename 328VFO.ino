@@ -35,7 +35,8 @@ byte encoder_seqB = 0;
 // Menu system
 char *menuMainList[] = {"Main Menu", " Drive Current", " Stored Message", " Reserved"};
 char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
-char *menuOpt2List[] = {"Stored Message", " Send Message", " View Message"};
+char *menuOpt2List[] = {"Stored Message", " Send Message", " View Message", " Repeat Delay"};
+char *menuOpt3List[] = {"Reserved", " Item 1", " Item 2", " Item 3"};
 uint8_t menupage = 0;
 uint8_t menuoption = 1;
 
@@ -47,7 +48,7 @@ const unsigned long freqstep[] = {100, 500, 1000, 5000, 10000, 100000};
 #define step_arraylength (sizeof(freqstep) / sizeof(freqstep[0]))
 uint8_t freqsteps = 1;
 uint8_t currentband = 1;
-uint8_t drive_strength = 8;
+uint8_t cur_drive_strength = 8;
 
 // Morse code arrays per-character, some durations, and a stored message
 const char *letters[] = {
@@ -287,7 +288,7 @@ void update_display() {
   display.clearField(32, 1, 7);
   display.print(freqsteps[freqstep]);
   display.clearField(65, 2, 1);
-  display.print(drive_strength);
+  display.print(cur_drive_strength);
 }
 
 void redraw_VFO_UI() {
@@ -324,7 +325,10 @@ void draw_menu() {
       break;
 
     case 3:
-      display.println("Reserved");
+      display.println(menuOpt3List[0]);
+      display.println(menuOpt3List[1]);
+      display.println(menuOpt3List[2]);
+      display.println(menuOpt3List[3]);
       enable_select = true;
       break;
   }
@@ -336,17 +340,17 @@ void menu_selectoption() {
       switch (menuoption) {
         case 1:
           clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_2MA);
-          drive_strength = 2;
+          cur_drive_strength = 2;
           break;
 
         case 2:
           clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_4MA);
-          drive_strength = 4;
+          cur_drive_strength = 4;
           break;
 
         case 3:
           clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA); // Clear the correct menu line
-          drive_strength = 8;
+          cur_drive_strength = 8;
           break;
       }
       display.clearField(0, menuoption, 17); // Clear the correct menu line
