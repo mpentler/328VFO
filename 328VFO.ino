@@ -197,6 +197,16 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
       }
       break;
 
+    case 8:
+    case 16: // Rotary Encoder
+      if (!(sending_message)) {
+        poll_encoder();
+      }
+      else {
+        sending_message = false;
+      }
+      break;
+
     case 32: // Change band
       if (!(PIND & (1 << button_band))) {
         if (!(menu_displayed)) {
@@ -215,13 +225,8 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
       }
       break;
 
-    default: // The rotary encoder is the only thing left...
-      if (!(sending_message)) {
-        poll_encoder();
-      }
-      else {
-        sending_message = false;
-      }
+    default:
+      break;
   }
 
   input_received = false; // Reset input tracker
@@ -375,6 +380,10 @@ void menu_selectoption() {
           display.println(stored_message);
           delay(2000);
           display.clearField(0, 3, 17);
+          break;
+
+        case 3:
+          // Change repeat delay
           break;
       }
       break;
