@@ -6,37 +6,57 @@
 // drive strength current of the clock generator, and has some basic menu implementation with a rotary encoder and buttons. If you use this
 // and change any pins you will need to change any code accordingly for different PORT/PIN registers. I went for size/speed for a known
 // config rather than going for portability
+//
+// V0.2 - WSPR support
+// Using some code stolen from THE INTERNET I have added basic WSPR support for encoding callsign, locator, and a hard-coded (for now) power.
+// I think it's working and I can hear the tone pitch changing on my radio when I trigger it, so I think it's good to go. No time sync so you
+// will have to start it yourself on the right time manually for now. Also button I/O is still absolute dogshit. Sorry. Help me fix it if you
+// can understand what the hell I've done wrong with my pin change interrupts.
 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
+#include <JTEncode.h>
 #include "SSD1306AsciiAvrI2c.h"
 #include "si5351.h"
 
 // State tracking variables
-boolean tx = false;
-boolean sending_message = false;
-boolean menu_displayed = false;
-boolean enable_select = false;
-volatile boolean input_received = false;
+boolean tx = false;                       // PTT tracker
+boolean sending_message = false;          // Set on stored CW message sending
+boolean menu_displayed = false;           // Tracking if in menu mode
+boolean enable_select = false;            // Enable submenu item selection
+volatile boolean input_received = false;  // For the buttons/rotary encoder
+volatile boolean proceed = false;         // For WSPR transmit timing
 
 // Initial PORTD button states
 uint8_t portdhistory = 0b00111111; // default is high because of the pull-up resistors
 
 // Defining some buttons and doing the rotary encoder setup here
-#define button_PTT PD0
-#define button_step PD1
-#define button_menu PD2
-#define encoder_A PD3
-#define encoder_B PD4
-#define button_band PD5
+#define button_PTT      PD0
+#define button_step     PD1
+#define button_menu     PD2
+#define encoder_A       PD3
+#define encoder_B       PD4
+#define button_band     PD5
 byte encoder_seqA = 0;
 byte encoder_seqB = 0;
 
+// All of this drives the WSPR stuff
+#define TONE_SPACING    146           // ~1.46 Hz
+#define WSPR_CTC        10672         // CTC value for WSPR
+#define SYMBOL_COUNT    WSPR_SYMBOL_COUNT
+#define CORRECTION      0             // Change this for your ref osc
+
+JTEncode jtencode;
+char call[7] = "MM3IIG";              // Change this
+char loc[5] = "IO85";                 // Change this
+uint8_t dbm = 10;
+uint8_t tx_buffer[SYMBOL_COUNT];
+
 // Menu system
-const char *menuMainList[] = {"Main Menu", " Drive Current", " Stored Message", " Reserved"};
+const char *menuMainList[] = {"Main Menu", " Drive Current", " Stored CW Msg", " WSPR"};
 const char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
-const char *menuOpt2List[] = {"Stored Message", " Send Message", " View Message", " Repeat Delay"};
-const char *menuOpt3List[] = {"Reserved", " Item 1", " Item 2", " Item 3"};
+const char *menuOpt2List[] = {"Stored CW Msg", " Send Message", " View Message", " Repeat Delay"};
+const char *menuOpt3List[] = {"WSPR", " Send Message", " Item 2", " Item 3"};
 uint8_t menupage = 0;
 uint8_t menuoption = 1;
 
@@ -75,12 +95,22 @@ SSD1306AsciiAvrI2c display;
 // ************************************
 void setup() {
   // Define I/O pins and set some registers
-  DDRB = 0b00000010;                                                                                                               // Define PB1 as output for later use
-  DDRD |= (1 << button_PTT) | (1 << button_step) | (1 << button_menu) | (1 << encoder_A) | (1 << encoder_B) | (1 << button_band);  // Define the buttons as inputs
+  DDRB = 0b00000010; // Define PB1 as output for later use
+  DDRD |= (1 << button_PTT) | (1 << button_step) | (1 << button_menu) | (1 << encoder_A) | (1 << encoder_B) | (1 << button_band); // Define the buttons as inputs
   PORTD |= (1 << button_PTT) | (1 << button_step) | (1 << button_menu) | (1 << encoder_A) | (1 << encoder_B) | (1 << button_band); // Set pullup resistors
-  PCICR |= (1 << PCIE2);                                                                                                           // Pin-change interrupts on PORTD
-  PCMSK2 |= (1 << button_PTT) | (1 << button_step) | (1 << button_menu) | (1 << encoder_A) | (1 << encoder_B | (1 << button_band));// Set pin-change mask to read the 6 inputs
+  PCICR |= (1 << PCIE2); // Pin-change interrupts on PORTD
+  PCMSK2 |= (1 << button_PTT) | (1 << button_step) | (1 << button_menu) | (1 << encoder_A) | (1 << encoder_B | (1 << button_band)); // Set pin-change mask to read the 6 inputs
   ADCSRA = 0; // Disable the ADC to save power
+
+  // Set up timer for WSPR function
+  TCCR1A = 0;              // Set entire TCCR1A register to 0; disconnects interrupt output pins, sets normal waveform mode.  We're just using Timer1 as a counter
+  TCNT1  = 0;              // Initialize counter value to 0
+  TCCR1B = (1 << CS12) |   // Set CS12 and CS10 bit to set prescale
+    (1 << CS10) |          //   to /1024
+    (1 << WGM12);          //   turn on CTC
+                           //   which gives, 64 microseconds ticks
+  TIMSK1 = (1 << OCIE1A);  // Enable all timer compare interrupts (just one in our case)
+  OCR1A = WSPR_CTC;        // Set up interrupt trigger count
 
   // Display setup
   display.begin(&Adafruit128x32, 0x3C); // Address 0x3C for 128x32 LCD
@@ -88,7 +118,7 @@ void setup() {
   redraw_VFO_UI();
 
   // set clk0 output to the starting frequency
-  clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
+  clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, CORRECTION);
   clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
   clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
   update_display();
@@ -112,6 +142,10 @@ void sleep() {
 
 ISR (PCINT2_vect) { // Called on any input
   input_received = true;
+}
+
+ISR (TIMER1_COMPA_vect) { // WSPR timer interrupt vector
+  proceed = true;
 }
 
 // ******************************************************************************************************************************************
@@ -259,7 +293,7 @@ void poll_encoder() { // All of this great code from https://www.allaboutcircuit
         menuoption = 3;  // Reset to bottom
       }
       display.clearField(0, menuoption, 1);
-      display.print(">");       // Draw cursor
+      display.print(">"); // Draw cursor
     }
   }
 
@@ -389,11 +423,20 @@ void menu_selectoption() {
       break;
 
     case 3:
+      switch (menuoption) {
+        case 1:
+        display.clearField(0, menuoption, 17);
+        display.println(">Selected");
+        delay(1000);
+        menu_cancel();
+        wspr_transmit_msg();
+        break;
+      }
       break;
   }
 }
 
-void menu_cancel() { // Reused a lot
+void menu_cancel() { // Reused a lot, so made into a function
   enable_select = false;
   menupage = 0;
   menuoption = 1;
@@ -470,4 +513,32 @@ void flash_dot_or_dash(char dot_or_dash) {
   clockgen.output_enable(SI5351_CLK0, 0); // Turn the clockgen off
   // Give space between parts of the same letter...equal to one dot
   delay(dot_duration);
+}
+
+// ******************************************************************************************************************************************
+// WSPR functions
+// ***********************************************
+
+void wspr_transmit_msg() {
+  tx = true;
+  display.clearField(0, 2, 3);
+  display.print("Tx!");
+  display.clearField(0, 3, 17);
+  display.print("Sending WSPR...");
+  clockgen.output_enable(SI5351_CLK0, 1); // Reset the tone to 0 and turn on the output
+
+  // Encode and send the message
+  jtencode.wspr_encode(call, loc, dbm, tx_buffer);
+  for (uint8_t i = 0; i < SYMBOL_COUNT; i++) {
+    clockgen.set_freq((frequency * 100ULL) + (tx_buffer[i] * TONE_SPACING), SI5351_CLK0);
+    //Serial.print("freq = ");
+    //Serial.println(tx_buffer[i]);
+    proceed = false;
+    while(!proceed); // Triggered by timer ISR
+  }
+
+  clockgen.output_enable(SI5351_CLK0, 0); // Turn off the output
+  tx = false;
+  display.clearField(0, 2, 3);
+  display.clearField(0, 3, 17);
 }
