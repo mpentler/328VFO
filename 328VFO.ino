@@ -33,10 +33,10 @@ byte encoder_seqA = 0;
 byte encoder_seqB = 0;
 
 // Menu system
-char *menuMainList[] = {"Main Menu", " Drive Current", " Stored Message", " Reserved"};
-char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
-char *menuOpt2List[] = {"Stored Message", " Send Message", " View Message", " Repeat Delay"};
-char *menuOpt3List[] = {"Reserved", " Item 1", " Item 2", " Item 3"};
+const char *menuMainList[] = {"Main Menu", " Drive Current", " Stored Message", " Reserved"};
+const char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
+const char *menuOpt2List[] = {"Stored Message", " Send Message", " View Message", " Repeat Delay"};
+const char *menuOpt3List[] = {"Reserved", " Item 1", " Item 2", " Item 3"};
 uint8_t menupage = 0;
 uint8_t menuoption = 1;
 
@@ -63,7 +63,7 @@ const char *numbers[] = {
   "--...", "---..", "----."
 };
 uint8_t dot_duration = 100;
-uint8_t message_delay = 2000;
+int message_delay = 2000;
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
@@ -120,7 +120,7 @@ ISR (PCINT2_vect) { // Called on any input
 void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-change-interrupt-atmega328p - Debounce needs implementing, possibly?
   uint8_t changedbits;
   uint8_t intreading = PIND & PCMSK2;
-  changedbits = PIND ^ portdhistory;
+  changedbits = intreading ^ portdhistory;
   portdhistory = intreading; // Save current input states
 
   switch (changedbits) {
@@ -446,11 +446,11 @@ void send_message() {
   display.clearField(0, 3, 17);
 }
 
-void flash_morse_code(char *morse_code) {
+void flash_morse_code(const char *morse_code) {
   uint8_t i = 0;
 
   // Read the dots and dashes and flash accordingly
-  while (morse_code[i] != NULL) {
+  while (morse_code[i] != '\0') {
     flash_dot_or_dash(morse_code[i]);
     i++;
   }
