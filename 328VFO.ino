@@ -531,8 +531,6 @@ void wspr_transmit_msg() {
   jtencode.wspr_encode(call, loc, dbm, tx_buffer);
   for (uint8_t i = 0; i < SYMBOL_COUNT; i++) {
     clockgen.set_freq((frequency * 100ULL) + (tx_buffer[i] * TONE_SPACING), SI5351_CLK0);
-    //Serial.print("freq = ");
-    //Serial.println(tx_buffer[i]);
     proceed = false;
     while(!proceed); // Triggered by timer ISR
   }
