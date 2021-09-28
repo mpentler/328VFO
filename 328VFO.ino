@@ -388,18 +388,20 @@ void menu_selectoption() {
     case 1:
       switch (menuoption) {
         case 1:
-          cur_drive_strength = SI5351_DRIVE_2MA;
+          clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_2MA);
+          cur_drive_strength = 2;
           break;
 
         case 2:
-          cur_drive_strength = SI5351_DRIVE_4MA;
+          clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_4MA);
+          cur_drive_strength = 4;
           break;
 
         case 3:
-          cur_drive_strength = SI5351_DRIVE_8MA;
+          clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
+          cur_drive_strength = 8;
           break;
       }
-      clockgen.drive_strength(SI5351_CLK0, cur_drive_strength); // Set new output level
       display.clearField(0, menuoption, 17); // Clear the correct menu line
       display.println(">Selected");
       delay(1000);
