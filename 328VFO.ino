@@ -38,8 +38,8 @@ uint8_t portdhistory = 0b00111111; // default is high because of the pull-up res
 #define encoder_A       PD3
 #define encoder_B       PD4
 #define button_band     PD5
-byte encoder_seqA = 0;
-byte encoder_seqB = 0;
+uint8_t encoder_seqA = 0;
+uint8_t encoder_seqB = 0;
 
 // All of this drives the WSPR stuff
 #define TONE_SPACING    146           // ~1.46 Hz
@@ -48,8 +48,8 @@ byte encoder_seqB = 0;
 #define CORRECTION      0             // Change this for your ref osc
 
 JTEncode jtencode;
-char call[7] = "MM3IIG";              // Change this
-char loc[5] = "IO85";                 // Change this
+const char call[7] = "MM3IIG";              // Change this
+const char loc[5] = "IO85";                 // Change this
 uint8_t dbm = 10;
 uint8_t tx_buffer[SYMBOL_COUNT];
 
@@ -84,7 +84,7 @@ const char *numbers[] = {
   "--...", "---..", "----."
 };
 uint8_t dot_duration = 100;
-int message_delay = 2000;
+uint16_t message_delay = 2000;
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
