@@ -389,7 +389,7 @@ void menu_selectoption() {
           break;
 
         case 3:
-          clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA); // Clear the correct menu line
+          clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
           cur_drive_strength = 8;
           break;
       }
