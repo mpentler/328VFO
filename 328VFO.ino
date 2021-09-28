@@ -55,8 +55,8 @@ uint8_t tx_buffer[SYMBOL_COUNT];
 // Menu system
 const char *menuMainList[] = {"Main Menu", " Drive Current", " Stored CW Msg", " WSPR"};
 const char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
-const char *menuOpt2List[] = {"Stored CW Msg", " Send Message", " View Message", " Repeat Delay"};
-const char *menuOpt3List[] = {"WSPR", " Send Message", " Item 2", " Item 3"};
+const char *menuOpt2List[] = {"Stored CW Msg", " Send Message", " View Message", " Reserved"};
+const char *menuOpt3List[] = {"WSPR", " Send Message", " Reserved", " Reserved"};
 uint8_t menupage = 0;
 uint8_t menuoption = 1;
 
@@ -307,10 +307,10 @@ void poll_encoder() { // All of this great code from https://www.allaboutcircuit
       display.clearField(0, menuoption, 1);
       menuoption++;
       if (menuoption == 4) {
-        menuoption = 1;  // Reset to top
+        menuoption = 1; // Reset to top
       }
       display.clearField(0, menuoption, 1);
-      display.print(">");      // Draw cursor
+      display.print(">"); // Draw cursor
     }
   }
 }
@@ -414,10 +414,6 @@ void menu_selectoption() {
           display.println(stored_message);
           delay(2000);
           display.clearField(0, 3, 17);
-          break;
-
-        case 3:
-          // Change repeat delay
           break;
       }
       break;
