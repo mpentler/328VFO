@@ -84,7 +84,7 @@ const char *numbers[] = {
   "--...", "---..", "----."
 };
 uint8_t dot_duration = 100;
-uint16_t message_delay = 2000;
+uint8_t message_delay = 2;
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
@@ -496,7 +496,7 @@ void send_message() {
         break; // Break out of the for loop here
       }
     }
-    delay(message_delay);
+    delay(message_delay * 1000);
   }
   tx = false;
   display.clearField(0, 2, 3);
