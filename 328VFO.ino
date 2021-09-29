@@ -251,6 +251,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
               currentband = 0; // Reset to beginning of array
             }
             frequency = bandstarts[currentband];
+            clockgen.set_freq(frequency * SI5351_FREQ_MULT, SI5351_CLK0);
             update_display();
           }
           else {
