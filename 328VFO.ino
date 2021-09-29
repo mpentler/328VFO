@@ -419,10 +419,10 @@ void menu_selectoption() {
           break;
 
         case 2:
-          display.clearField(0, 3, 17);
+          display.clearField(0, 4, 17);
           display.println(stored_message);
           delay(2000);
-          display.clearField(0, 3, 17);
+          display.clearField(0, 4, 17);
           break;
           
         case 3:
