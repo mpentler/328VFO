@@ -9,9 +9,10 @@
 //
 // V0.2 - WSPR support
 // Using some code stolen from THE INTERNET I have added basic WSPR support for encoding callsign, locator, and a hard-coded (for now) power.
-// I think it's working and I can hear the tone pitch changing on my radio when I trigger it, so I think it's good to go. No time sync so you
-// will have to start it yourself on the right time manually for now. Also button I/O is still absolute dogshit. Sorry. Help me fix it if you
-// can understand what the hell I've done wrong with my pin change interrupts.
+// No time sync so you will have to start it yourself on the right time manually for now. But it does work!
+//
+// Button I/O is still absolute dogshit. Sorry. Help me fix it if you can understand what the hell I've done wrong with my pin change interrupts.
+// Also a few other bits of code was cleaned-up and I changed some menu strings.
 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
@@ -37,8 +38,8 @@ uint8_t portdhistory = 0b00111111; // default is high because of the pull-up res
 #define encoder_A       PD3
 #define encoder_B       PD4
 #define button_band     PD5
-byte encoder_seqA = 0;
-byte encoder_seqB = 0;
+uint8_t encoder_seqA = 0;
+uint8_t encoder_seqB = 0;
 
 // All of this drives the WSPR stuff
 #define TONE_SPACING    146           // ~1.46 Hz
@@ -47,8 +48,8 @@ byte encoder_seqB = 0;
 #define CORRECTION      0             // Change this for your ref osc
 
 JTEncode jtencode;
-char call[7] = "MM3IIG";              // Change this
-char loc[5] = "IO85";                 // Change this
+const char call[7] = "MM3IIG";              // Change this
+const char loc[5] = "IO85";                 // Change this
 uint8_t dbm = 10;
 uint8_t tx_buffer[SYMBOL_COUNT];
 
@@ -83,7 +84,7 @@ const char *numbers[] = {
   "--...", "---..", "----."
 };
 uint8_t dot_duration = 100;
-int message_delay = 2000;
+uint16_t message_delay = 2000;
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
@@ -281,37 +282,45 @@ void poll_encoder() { // All of this great code from https://www.allaboutcircuit
   // Need to implement some kind of frequency control here. Do I want to set limits? Free run?
   // Probably should lock to amateur bands only with an upper and lower limit, checked in here.
   if (encoder_seqA == 0b00001001 && encoder_seqB == 0b00000011) {
-    if (!(menu_displayed)) {
-      frequency -= freqstep[freqsteps];
-      clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
-      update_display();
-    }
-    else {
-      display.clearField(0, menuoption, 1);
-      menuoption--;
-      if (menuoption == 0) {
-        menuoption = 3;  // Reset to bottom
-      }
-      display.clearField(0, menuoption, 1);
-      display.print(">"); // Draw cursor
-    }
+    encoder_left();
   }
 
   if (encoder_seqA == 0b00000011 && encoder_seqB == 0b00001001) {
-    if (!(menu_displayed)) {
-      frequency += freqstep[freqsteps];
-      clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
-      update_display();
+    encoder_right();
+  }
+}
+
+void encoder_left() {
+  if (!(menu_displayed)) {
+    frequency -= freqstep[freqsteps];
+    clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+    update_display();
+  }
+  else {
+    display.clearField(0, menuoption, 1);
+    menuoption--;
+    if (menuoption == 0) {
+      menuoption = 3;  // Reset to bottom
     }
-    else {
-      display.clearField(0, menuoption, 1);
-      menuoption++;
-      if (menuoption == 4) {
-        menuoption = 1; // Reset to top
-      }
-      display.clearField(0, menuoption, 1);
-      display.print(">"); // Draw cursor
+    display.clearField(0, menuoption, 1);
+    display.print(">"); // Draw cursor
+  }
+}
+
+void encoder_right() {
+  if (!(menu_displayed)) {
+    frequency += freqstep[freqsteps];
+    clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+    update_display();
+  }
+  else {
+    display.clearField(0, menuoption, 1);
+    menuoption++;
+    if (menuoption == 4) {
+      menuoption = 1; // Reset to top
     }
+    display.clearField(0, menuoption, 1);
+    display.print(">"); // Draw cursor
   }
 }
 
@@ -415,18 +424,27 @@ void menu_selectoption() {
           delay(2000);
           display.clearField(0, 3, 17);
           break;
+          
+        case 3:
+          break;
       }
       break;
 
     case 3:
       switch (menuoption) {
         case 1:
-        display.clearField(0, menuoption, 17);
-        display.println(">Selected");
-        delay(1000);
-        menu_cancel();
-        wspr_transmit_msg();
-        break;
+          display.clearField(0, menuoption, 17);
+          display.println(">Selected");
+          delay(1000);
+          menu_cancel();
+          wspr_transmit_msg();
+          break;
+          
+        case 2:
+          break;
+          
+        case 3:
+          break;
       }
       break;
   }
