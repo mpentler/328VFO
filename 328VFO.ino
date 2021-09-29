@@ -62,8 +62,8 @@ uint8_t menupage = 0;
 uint8_t menuoption = 1;
 
 // Frequency variables, band changing & step sizes setup, plus drive strength for UI
-unsigned long frequency = 7000000ULL;
-const unsigned long bandstarts[] = {3500000ULL, 7000000ULL, 10100000ULL, 14000000ULL, 18068000ULL, 21000000ULL, 24890000ULL, 28000000ULL};
+unsigned long frequency = 7000000;
+const unsigned long bandstarts[] = {3500000, 7000000, 10100000, 14000000, 18068000, 21000000, 24890000, 28000000};
 const unsigned long freqstep[] = {100, 500, 1000, 5000, 10000, 100000};
 #define band_arraylength (sizeof(bandstarts) / sizeof(bandstarts[0]))
 #define step_arraylength (sizeof(freqstep) / sizeof(freqstep[0]))
@@ -121,7 +121,7 @@ void setup() {
   // set clk0 output to the starting frequency
   clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, CORRECTION);
   clockgen.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
-  clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+  clockgen.set_freq(frequency * SI5351_FREQ_MULT, SI5351_CLK0);
   update_display();
   clockgen.output_enable(SI5351_CLK0, 0); // Turn off the clockgen once frequency set, as default behaviour seems to turn it on when frequency is changed
 }
@@ -203,7 +203,7 @@ void poll_inputs() { // All of this from https://www.avrfreaks.net/forum/pin-cha
             if (freqsteps > step_arraylength - 1) {
               freqsteps = 0; // Reset to beginning of array
             }
-            clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+            clockgen.set_freq(frequency * SI5351_FREQ_MULT, SI5351_CLK0);
             update_display();
           }
           else {
@@ -293,7 +293,7 @@ void poll_encoder() { // All of this great code from https://www.allaboutcircuit
 void encoder_left() {
   if (!(menu_displayed)) {
     frequency -= freqstep[freqsteps];
-    clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+    clockgen.set_freq(frequency * SI5351_FREQ_MULT, SI5351_CLK0);
     update_display();
   }
   else {
@@ -310,7 +310,7 @@ void encoder_left() {
 void encoder_right() {
   if (!(menu_displayed)) {
     frequency += freqstep[freqsteps];
-    clockgen.set_freq(frequency * 100ULL, SI5351_CLK0);
+    clockgen.set_freq(frequency * SI5351_FREQ_MULT, SI5351_CLK0);
     update_display();
   }
   else {
@@ -544,7 +544,7 @@ void wspr_transmit_msg() {
   // Encode and send the message
   jtencode.wspr_encode(call, loc, dbm, tx_buffer);
   for (uint8_t i = 0; i < SYMBOL_COUNT; i++) {
-    clockgen.set_freq((frequency * 100ULL) + (tx_buffer[i] * TONE_SPACING), SI5351_CLK0);
+    clockgen.set_freq((frequency * SI5351_FREQ_MULT) + (tx_buffer[i] * TONE_SPACING), SI5351_CLK0);
     proceed = false;
     while(!proceed); // Triggered by timer ISR
   }
