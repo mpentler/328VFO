@@ -84,7 +84,7 @@ const char *numbers[] = {
   "--...", "---..", "----."
 };
 #define dot_duration 200
-#define message_delay 200
+#define message_delay 2000
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
