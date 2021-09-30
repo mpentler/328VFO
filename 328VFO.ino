@@ -497,7 +497,7 @@ void send_message() {
         break; // Break out of the for loop here
       }
     }
-    delay(message_delay * 1000);
+    delay(message_delay);
   }
   tx = false;
   display.clearField(0, 2, 3);
