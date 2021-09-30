@@ -82,7 +82,7 @@ const char *numbers[] = {
   "-----", ".----", "..---", "...--", "....-", ".....", "-....",
   "--...", "---..", "----."
 };
-#define dot_duration 100 // Length of one dot in ms when sending morse, dash is 3 x this
+#define dot_duration 200 // Length of one dot in ms when sending morse, dash is 3 x this
 #define message_delay 2000 // Delay between CW messages in ms
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
