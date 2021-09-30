@@ -45,7 +45,6 @@ uint8_t encoder_seqB = 0;
 #define TONE_SPACING    146           // ~1.46 Hz
 #define WSPR_CTC        10672         // CTC value for WSPR
 #define SYMBOL_COUNT    WSPR_SYMBOL_COUNT
-#define CORRECTION      0             // Change this for your ref osc
 
 JTEncode jtencode;
 const char call[7] = "MM3IIG";              // Change this
@@ -55,7 +54,7 @@ uint8_t tx_buffer[SYMBOL_COUNT];
 
 // Menu system
 const char *menuMainList[] = {"Main Menu", " Drive Current", " Stored CW Msg", " WSPR"};
-const char *menuOpt1List[] = {"Drive Current", " 2ma", " 4ma", " 8ma"};
+const char *menuOpt1List[] = {"Drive Current", " 2mA", " 4mA", " 8mA"};
 const char *menuOpt2List[] = {"Stored CW Msg", " Send Message", " View Message", " Reserved"};
 const char *menuOpt3List[] = {"WSPR", " Send Message", " Reserved", " Reserved"};
 uint8_t menupage = 0;
@@ -83,12 +82,14 @@ const char *numbers[] = {
   "-----", ".----", "..---", "...--", "....-", ".....", "-....",
   "--...", "---..", "----."
 };
-#define dot_duration 200
-#define message_delay 2000
+#define dot_duration 100 // Length of one dot in ms when sending morse, dash is 3 x this
+#define message_delay 2000 // Delay between CW messages in ms
 const char stored_message[] = "CQ TEST DE MM3IIG";
 
 // define clockgen and 128x32 display
 Si5351 clockgen;
+#define CORRECTION      0 // Change this if required for your oscillator offset
+
 SSD1306AsciiAvrI2c display;
 
 // ******************************************************************************************************************************************
@@ -108,8 +109,7 @@ void setup() {
   TCNT1  = 0;              // Initialize counter value to 0
   TCCR1B = (1 << CS12) |   // Set CS12 and CS10 bit to set prescale
     (1 << CS10) |          //   to /1024
-    (1 << WGM12);          //   turn on CTC
-                           //   which gives, 64 microseconds ticks
+    (1 << WGM12);          //   turn on CTC which gives, 64 microseconds ticks
   TIMSK1 = (1 << OCIE1A);  // Enable all timer compare interrupts (just one in our case)
   OCR1A = WSPR_CTC;        // Set up interrupt trigger count
 
@@ -301,7 +301,7 @@ void encoder_left() {
     display.clearField(0, menuoption, 1);
     menuoption--;
     if (menuoption == 0) {
-      menuoption = 3;  // Reset to bottom
+      menuoption = 3; // Reset to bottom
     }
     display.clearField(0, menuoption, 1);
     display.print(">"); // Draw cursor
@@ -420,10 +420,10 @@ void menu_selectoption() {
           break;
 
         case 2:
-          display.clearField(0, 4, 17);
+          display.clearField(0, 3, 17);
           display.println(stored_message);
           delay(2000);
-          display.clearField(0, 4, 17);
+          display.clearField(0, 3, 17);
           break;
           
         case 3:
